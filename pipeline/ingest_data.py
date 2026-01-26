@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+import click
 import pyarrow.parquet as pq
 import pandas as pd
 from sqlalchemy import create_engine
@@ -7,16 +8,26 @@ from tqdm.auto import tqdm
 from pathlib import Path
 
 
+@click.command()
+@click.option('--year', default=2025, type=int, help='Year of the data to ingest')
+@click.option('--month', default=11, type=int, help='Month of the data to ingest')
+@click.option('--pg-user', default='root', help='PostgreSQL username')
+@click.option('--pg-password', default='root', help='PostgreSQL password')
+@click.option('--pg-host', default='localhost', help='PostgreSQL host')
+@click.option('--pg-port', default=5432, type=int, help='PostgreSQL port')
+@click.option('--pg-db', default='ny_taxi', help='PostgreSQL database name')
+@click.option('--batch-size', default=10_000, type=int, help='Batch size for processing')
 def run(
-    year: int = 2025,
-    month: int = 11,
-    pg_user: str = "root",
-    pg_password: str = "root",
-    pg_host: str = "localhost",
-    pg_port: int = 5432,
-    pg_db: str = "ny_taxi",
-    batch_size: int = 10_000
+    year: int,
+    month: int,
+    pg_user: str,
+    pg_password: str,
+    pg_host: str,
+    pg_port: int,
+    pg_db: str,
+    batch_size: int
 ):
+    """Ingest green taxi trip data from parquet files into PostgreSQL."""
     # Create the database engine
     engine = create_engine(f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}")
 
