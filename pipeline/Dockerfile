@@ -4,7 +4,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/
 WORKDIR /code
 ENV PATH="/code/.venv/bin:$PATH"
 
-COPY pyproject.toml .python-version uv.lock ./
+COPY pyproject.toml .python-version uv.lock pipeline.py ./
 RUN uv sync --locked
 
 COPY pipeline.py .
