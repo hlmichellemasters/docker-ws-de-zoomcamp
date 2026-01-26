@@ -4,7 +4,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/
 WORKDIR /code
 ENV PATH="/code/.venv/bin:$PATH"
 
-COPY pyproject.toml .python-version uv.lock ingest_data.py ./
+COPY pyproject.toml .python-version uv.lock ingest_data.py ingest_zones.py ./
 RUN uv sync --locked
 
-ENTRYPOINT ["python", "ingest_data.py"]
+# Use python as entrypoint, default to ingest_data.py
+ENTRYPOINT ["python"]
+CMD ["ingest_data.py"]
