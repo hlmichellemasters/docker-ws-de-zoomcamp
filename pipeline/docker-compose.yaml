@@ -1,0 +1,60 @@
+# Docker Compose for NYC Taxi Data Pipeline
+# 
+# Services:
+#   - pgdatabase: PostgreSQL 13 database
+#   - pgadmin: Web-based PostgreSQL administration tool
+#
+# Usage:
+#   Start all services:
+#     docker compose up -d
+#
+#   Stop all services:
+#     docker compose down
+#
+#   Stop and remove volumes (deletes data):
+#     docker compose down -v
+#
+#   View logs:
+#     docker compose logs -f
+#
+#   Run ingestion container manually:
+#     docker run -it \
+#       --network pipeline_default \
+#       -v $(pwd)/data:/code/data \
+#       ingest_data:latest \
+#       --year 2025 \
+#       --month 11 \
+#       --pg-host pgdatabase \
+#       --pg-user root \
+#       --pg-password root \
+#       --pg-db ny_taxi
+#
+#   Access pgAdmin:
+#     Open http://localhost:8080 in browser
+#     Login: admin@admin.com / admin
+#     Add server with host: pgdatabase, port: 5432, user: root, password: root
+
+services:
+  pgdatabase:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ny_taxi
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - pgdatabase
+
+volumes:
+  pgdata:
