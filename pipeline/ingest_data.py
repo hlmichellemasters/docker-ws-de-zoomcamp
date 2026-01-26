@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env -S uv run python
 # coding: utf-8
 import click
 import pyarrow.parquet as pq
@@ -60,7 +60,7 @@ def run(
 
     DATA_DIR = Path("data/raw")
     parquet_path = DATA_DIR / f"green_tripdata_{year}-{month:02d}.parquet"
-    table_name = "green_taxi_data"
+    table_name = f"green_taxi_data_{year}_{month:02d}"
 
     pf = pq.ParquetFile(parquet_path)
     first = True
