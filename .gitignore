@@ -1,4 +1,13 @@
 # ============================
+# SECRETS (never commit)
+# ============================
+.secrets/
+**/application_default_credentials.json
+**/*credentials*.json
+**/*.pem
+**/*.key
+
+# ============================
 # DATA / LARGE FILES (DE / Zoomcamp)
 # ============================
 *.parquet

@@ -1,5 +1,5 @@
 # Docker Compose for NYC Taxi Data Pipeline
-# 
+#
 # Services:
 #   - pgdatabase: PostgreSQL 13 database
 #   - pgadmin: Web-based PostgreSQL administration tool
@@ -17,22 +17,11 @@
 #   View logs:
 #     docker compose logs -f
 #
-#   Run ingestion container manually:
-#     docker run -it \
-#       --network pipeline_default \
-#       -v $(pwd)/data:/code/data \
-#       ingest_data:latest \
-#       --year 2025 \
-#       --month 11 \
-#       --pg-host pgdatabase \
-#       --pg-user root \
-#       --pg-password root \
-#       --pg-db ny_taxi
-#
 #   Access pgAdmin:
 #     Open http://localhost:8080 in browser
 #     Login: admin@admin.com / admin
 #     Add server with host: pgdatabase, port: 5432, user: root, password: root
+
 volumes:
   pgdata:
   kestra_postgres_data:
@@ -66,34 +55,45 @@ services:
     depends_on:
       - pgdatabase
 
-
   kestra_postgres:
-      image: postgres:18
-      volumes:
-        - kestra_postgres_data:/var/lib/postgresql
-      environment:
-        POSTGRES_DB: kestra
-        POSTGRES_USER: kestra
-        POSTGRES_PASSWORD: k3str4
-      healthcheck:
-        test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-        interval: 30s
-        timeout: 10s
-        retries: 10
+    image: postgres:18
+    volumes:
+      - kestra_postgres_data:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: kestra
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: k3str4
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  # NEW: Fail fast if ADC isn't present (makes GCP auth "required")
+  gcp_auth_check:
+    image: google/cloud-sdk:slim
+    volumes:
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+    command: >
+      sh -c "
+      test -f /root/.config/gcloud/application_default_credentials.json
+      || (echo 'ERROR: Missing GCP ADC. Run: gcloud auth application-default login' && exit 1)
+      "
 
   kestra:
     image: kestra/kestra:v1.1
     pull_policy: always
-    # Note that this setup with a root user is intended for development purpose.
-    # Our base image runs without root, but the Docker Compose implementation needs root to access the Docker socket
-    # To run Kestra in a rootless mode in production, see: https://kestra.io/docs/installation/podman-compose
     user: "root"
     command: server standalone
     volumes:
       - kestra_data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/kestra-wd:/tmp/kestra-wd
+      # NEW: mount ADC for Kestra runtime (and tasks that run inside this container)
+      - ~/.config/gcloud:/root/.config/gcloud:ro
     environment:
+      # NEW: standard ADC env var
+      GOOGLE_APPLICATION_CREDENTIALS: /root/.config/gcloud/application_default_credentials.json
       KESTRA_CONFIGURATION: |
         datasources:
           postgres:
@@ -123,3 +123,5 @@ services:
     depends_on:
       kestra_postgres:
         condition: service_started
+      gcp_auth_check:
+        condition: service_completed_successfully
