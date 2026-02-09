@@ -1,0 +1,27 @@
+Week 3's Queries included:
+
+SELECT PULocationID FROM `kestra-cloud.zoomcamp_hw3.yellow_taxi`;
+
+SELECT PULocationID, DOLocationID FROM `kestra-cloud.zoomcamp_hw3.yellow_taxi`;
+
+SELECT count(fare_amount) FROM `kestra-cloud.zoomcamp_hw3.yellow_taxi` WHERE fare_amount = 0.0;
+
+CREATE OR REPLACE TABLE `kestra-cloud.zoomcamp_hw3.yellow_taxi_part_clust`
+PARTITION BY DATE(tpep_dropoff_datetime)
+CLUSTER BY VendorID
+AS
+SELECT *
+FROM `kestra-cloud.zoomcamp_hw3.yellow_taxi`;
+
+SELECT DISTINCT VendorID
+FROM `kestra-cloud.zoomcamp_hw3.yellow_taxi`
+WHERE DATE(tpep_dropoff_datetime)
+      BETWEEN '2024-03-01' AND '2024-03-15';
+
+SELECT DISTINCT VendorID
+FROM `kestra-cloud.zoomcamp_hw3.yellow_taxi_part_clust`
+WHERE DATE(tpep_dropoff_datetime)
+      BETWEEN '2024-03-01' AND '2024-03-15';
+
+SELECT count(*)
+FROM `kestra-cloud.zoomcamp_hw3.yellow_taxi_part_clust`;
